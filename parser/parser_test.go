@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/joaovictorjs/adam-script/ast"
@@ -452,6 +453,201 @@ func Test_GivenSource_WhenParse_ThenShouldReturnCorrectProgram(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expectedProgram, program)
+		})
+	}
+}
+
+func Test_GivenSourceWithUnexpectedTokens_WhenParse_ThenShouldReturnCorrectError(t *testing.T) {
+	type TestCase struct {
+		name          string
+		source        string
+		expectedError error
+	}
+
+	testcases := []TestCase{
+		{
+			name:          "operator at start - plus",
+			source:        "+",
+			expectedError: fmt.Errorf("Unexpected token '+' at position 0."),
+		},
+		{
+			name:          "operator at start - minus",
+			source:        "-",
+			expectedError: fmt.Errorf("Unexpected token '-' at position 0."),
+		},
+		{
+			name:          "operator at start - star",
+			source:        "*",
+			expectedError: fmt.Errorf("Unexpected token '*' at position 0."),
+		},
+		{
+			name:          "operator at start - slash",
+			source:        "/",
+			expectedError: fmt.Errorf("Unexpected token '/' at position 0."),
+		},
+		{
+			name:          "missing right operand",
+			source:        "1 +",
+			expectedError: fmt.Errorf("Unexpected token '' at position 3."),
+		},
+		{
+			name:          "consecutive operators",
+			source:        "1 + * 2",
+			expectedError: fmt.Errorf("Unexpected token '*' at position 4."),
+		},
+		{
+			name:          "missing operator between numbers",
+			source:        "1 2",
+			expectedError: fmt.Errorf("Unexpected token '2' at position 2."),
+		},
+		{
+			name:          "trailing operator",
+			source:        "1 + 2 +",
+			expectedError: fmt.Errorf("Unexpected token '' at position 7."),
+		},
+		{
+			name:          "multiplication at start",
+			source:        "* 5",
+			expectedError: fmt.Errorf("Unexpected token '*' at position 0."),
+		},
+		{
+			name:          "double multiplication",
+			source:        "5 * * 2",
+			expectedError: fmt.Errorf("Unexpected token '*' at position 4."),
+		},
+		{
+			name:          "double plus operator",
+			source:        "1 + + 2",
+			expectedError: fmt.Errorf("Unexpected token '+' at position 4."),
+		},
+		{
+			name:          "double division",
+			source:        "1 / / 2",
+			expectedError: fmt.Errorf("Unexpected token '/' at position 4."),
+		},
+		{
+			name:          "operator after operator - division",
+			source:        "1 + / 2",
+			expectedError: fmt.Errorf("Unexpected token '/' at position 4."),
+		},
+		{
+			name:          "multiple operators at start",
+			source:        "+ + 1",
+			expectedError: fmt.Errorf("Unexpected token '+' at position 0."),
+		},
+		{
+			name:          "empty parentheses",
+			source:        "()",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 1."),
+		},
+		{
+			name:          "operator in parentheses",
+			source:        "(+)",
+			expectedError: fmt.Errorf("Unexpected token '+' at position 1."),
+		},
+		{
+			name:          "empty parentheses in expression",
+			source:        "1 + ()",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 5."),
+		},
+		{
+			name:          "operator before closing paren",
+			source:        "(1 +)",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 4."),
+		},
+		{
+			name:          "operator before closing paren with number after",
+			source:        "(1 +) 2",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 4."),
+		},
+		{
+			name:          "unclosed left paren",
+			source:        "(1 + 2",
+			expectedError: fmt.Errorf("Unexpected token '' at position 6."),
+		},
+		{
+			name:          "unmatched right paren",
+			source:        "1 + 2)",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 5."),
+		},
+		{
+			name:          "nested unclosed parens",
+			source:        "((1 + 2)",
+			expectedError: fmt.Errorf("Unexpected token '' at position 8."),
+		},
+		{
+			name:          "extra closing paren",
+			source:        "(1 + 2))",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 7."),
+		},
+		{
+			name:          "multiple nested unclosed parens",
+			source:        "1 + (2 + (3 + 4)",
+			expectedError: fmt.Errorf("Unexpected token '' at position 16."),
+		},
+		{
+			name:          "lone closing paren",
+			source:        ")",
+			expectedError: fmt.Errorf("Unexpected token ')' at position 0."),
+		},
+		{
+			name:          "number before opening paren",
+			source:        "1 (+ 2)",
+			expectedError: fmt.Errorf("Unexpected token '(' at position 2."),
+		},
+		{
+			name:          "number followed by number in parens",
+			source:        "5 (3)",
+			expectedError: fmt.Errorf("Unexpected token '(' at position 2."),
+		},
+		{
+			name:          "closing paren followed by number",
+			source:        "(1 + 2) 3",
+			expectedError: fmt.Errorf("Unexpected token '3' at position 8."),
+		},
+		{
+			name:          "closing paren followed by opening paren",
+			source:        "(1) (2)",
+			expectedError: fmt.Errorf("Unexpected token '(' at position 4."),
+		},
+		{
+			name:          "unknown character alone",
+			source:        "@",
+			expectedError: fmt.Errorf("Unexpected token '@' at position 0."),
+		},
+		{
+			name:          "unknown character in expression",
+			source:        "1 + @ + 2",
+			expectedError: fmt.Errorf("Unexpected token '@' at position 4."),
+		},
+		{
+			name:          "hash character in expression",
+			source:        "1 # 2",
+			expectedError: fmt.Errorf("Unexpected token '#' at position 2."),
+		},
+		{
+			name:          "dollar sign in expression",
+			source:        "1 + $ 2",
+			expectedError: fmt.Errorf("Unexpected token '$' at position 4."),
+		},
+		{
+			name:          "ampersand in expression",
+			source:        "5 & 3",
+			expectedError: fmt.Errorf("Unexpected token '&' at position 2."),
+		},
+		{
+			name:          "trailing unknown character",
+			source:        "1 + 2 @",
+			expectedError: fmt.Errorf("Unexpected token '@' at position 6."),
+		},
+	}
+
+	for _, test := range testcases {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			parser := NewParser(test.source)
+			_, err := parser.Parse()
+			assert.Equal(t, test.expectedError, err)
 		})
 	}
 }
