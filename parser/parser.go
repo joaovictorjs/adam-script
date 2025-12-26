@@ -127,7 +127,7 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 
 			p.index++
 			token = p.peek()
-			if !p.isExpected(token, lexer.Plus, lexer.Minus, lexer.Star, lexer.Slash, lexer.RParen) {
+			if !p.isValidExpressionFollower(token) {
 				err := handleUnexpectedToken(token)
 				return nil, err
 			}
@@ -139,7 +139,6 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 		{
 			p.index++
 			expr, err := p.parseAdditiveExpression()
-			p.index++
 			if err != nil {
 				return nil, err
 			}
@@ -148,6 +147,12 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 			if !p.isExpected(token, lexer.RParen) {
 				err := handleUnexpectedToken(token)
 				return nil, err
+			}
+
+			p.index++
+			token = p.peek()
+			if !p.isValidExpressionFollower(token) {
+				return nil, handleUnexpectedToken(token)
 			}
 
 			return expr, nil
@@ -163,6 +168,18 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 
 func handleUnexpectedToken(token lexer.Token) error {
 	return fmt.Errorf("Unexpected token '%s' at position %d.", token.Lexeme, token.Position)
+}
+
+func (p *Parser) isValidExpressionFollower(token lexer.Token) bool {
+	return p.isExpected(
+		token,
+		lexer.Plus,
+		lexer.Minus,
+		lexer.Star,
+		lexer.Slash,
+		lexer.RParen,
+		lexer.EOF,
+	)
 }
 
 func (p *Parser) isExpected(token lexer.Token, expected ...lexer.TokenKind) bool {
