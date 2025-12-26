@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/joaovictorjs/adam-script/ast"
@@ -125,6 +126,12 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 			}
 
 			p.index++
+			token = p.peek()
+			if !p.isExpected(token, lexer.Plus, lexer.Minus, lexer.Star, lexer.Slash, lexer.RParen) {
+				err := handleUnexpectedToken(token)
+				return nil, err
+			}
+
 			expr := ast.NumericLiteralExpression{Value: valueAsFloat}
 			return expr, nil
 		}
@@ -137,15 +144,30 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 				return nil, err
 			}
 
+			token = p.peek()
+			if !p.isExpected(token, lexer.RParen) {
+				err := handleUnexpectedToken(token)
+				return nil, err
+			}
+
 			return expr, nil
 		}
 	default:
 		{
 			p.index++
-			err := fmt.Errorf("Unexpected token '%s' at position %d.", token.Lexeme, token.Position)
+			err := handleUnexpectedToken(token)
 			return nil, err
 		}
 	}
+}
+
+func handleUnexpectedToken(token lexer.Token) error {
+	return fmt.Errorf("Unexpected token '%s' at position %d.", token.Lexeme, token.Position)
+}
+
+func (p *Parser) isExpected(token lexer.Token, expected ...lexer.TokenKind) bool {
+	isExpected := slices.Contains(expected, token.Kind)
+	return isExpected
 }
 
 func (p *Parser) peek() lexer.Token {
