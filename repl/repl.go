@@ -2,25 +2,31 @@ package repl
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/joaovictorjs/adam-script/parser"
 )
 
-type REPL struct{}
+type REPL struct {
+	showAst bool
+}
 
 const (
-	ColorReset  = "\033[0m"
-	ColorRed    = "\033[31m"
-	ColorGreen  = "\033[32m"
-	ColorYellow = "\033[33m"
-	ColorBlue   = "\033[34m"
-	ColorPurple = "\033[35m"
-	ColorCyan   = "\033[36m"
-	ColorWhite  = "\033[37m"
-	ColorBold   = "\033[1m"
+	ColorReset    = "\033[0m"
+	ColorRed      = "\033[31m"
+	ColorGreen    = "\033[32m"
+	ColorYellow   = "\033[33m"
+	ColorBlue     = "\033[34m"
+	ColorPurple   = "\033[35m"
+	ColorCyan     = "\033[36m"
+	ColorWhite    = "\033[37m"
+	ColorDarkGray = "\033[90m"
+	ColorBold     = "\033[1m"
 )
 
 func NewREPL() *REPL {
@@ -44,8 +50,20 @@ func (r *REPL) Run() {
 		}
 
 		if strings.HasPrefix(input, ".") {
-			handleCommand(input)
+			r.handleCommand(input)
 			continue
+		}
+
+		parser := parser.NewParser(input)
+		program, err := parser.Parse()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, ColorRed+err.Error()+ColorReset)
+			continue
+		}
+
+		if r.showAst {
+			data, _ := json.MarshalIndent(program, "", "  ")
+			fmt.Println(ColorDarkGray + string(data) + ColorReset)
 		}
 	}
 
@@ -67,10 +85,12 @@ func printBanner() {
 	fmt.Println()
 }
 
-func handleCommand(cmd string) {
+func (r *REPL) handleCommand(cmd string) {
 	switch cmd {
 	case ".help":
 		printHelp()
+	case ".ast":
+		r.toggleShowAst()
 	case ".exit":
 		os.Exit(0)
 	case ".clear":
@@ -81,9 +101,22 @@ func handleCommand(cmd string) {
 	}
 }
 
+func (r *REPL) toggleShowAst() {
+	r.showAst = !r.showAst
+	color := ColorRed
+	label := "OFF"
+	if r.showAst {
+		color = ColorGreen
+		label = "ON"
+	}
+
+	fmt.Println("Show ast was turned " + ColorBold + color + label + ColorReset + ".")
+}
+
 func printHelp() {
 	fmt.Println(ColorBlue + ColorBold + "\nAvailable Commands:" + ColorReset)
 	fmt.Println(ColorCyan + "  .help  " + ColorWhite + "- Show this help message" + ColorReset)
+	fmt.Println(ColorCyan + "  .ast   " + ColorWhite + "- Turn ON/OFF showing AST after parsing" + ColorReset)
 	fmt.Println(ColorCyan + "  .exit  " + ColorWhite + "- Exit the REPL" + ColorReset)
 	fmt.Println(ColorCyan + "  .clear " + ColorWhite + "- Clear the screen" + ColorReset)
 	fmt.Println()
