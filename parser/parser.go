@@ -118,6 +118,19 @@ func (p *Parser) parsePrimaryExpression() (ast.Expression, error) {
 	token := p.peek()
 
 	switch token.Kind {
+	case lexer.Identifier:
+		{
+			expr := ast.IdentifierExpression{
+				Symbol: token.Lexeme,
+			}
+			p.index++
+			token = p.peek()
+			if !p.isValidExpressionFollower(token) {
+				err := handleUnexpectedToken(token)
+				return nil, err
+			}
+			return expr, nil
+		}
 	case lexer.NumericLiteral:
 		{
 			valueAsFloat, err := strconv.ParseFloat(token.Lexeme, 64)
