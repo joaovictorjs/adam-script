@@ -441,6 +441,252 @@ func Test_GivenSource_WhenParse_ThenShouldReturnCorrectProgram(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:   "single identifier",
+			source: "x",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.IdentifierExpression{
+							Symbol: "x",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier with underscore",
+			source: "my_var",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.IdentifierExpression{
+							Symbol: "my_var",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier with numbers",
+			source: "var123",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.IdentifierExpression{
+							Symbol: "var123",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier in addition",
+			source: "x + 5",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.IdentifierExpression{
+								Symbol: "x",
+							},
+							Operator: '+',
+							Right: ast.NumericLiteralExpression{
+								Value: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier in subtraction",
+			source: "10 - y",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.NumericLiteralExpression{
+								Value: 10,
+							},
+							Operator: '-',
+							Right: ast.IdentifierExpression{
+								Symbol: "y",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "two identifiers in expression",
+			source: "a + b",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.IdentifierExpression{
+								Symbol: "a",
+							},
+							Operator: '+',
+							Right: ast.IdentifierExpression{
+								Symbol: "b",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier in multiplication",
+			source: "x * 3",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.IdentifierExpression{
+								Symbol: "x",
+							},
+							Operator: '*',
+							Right: ast.NumericLiteralExpression{
+								Value: 3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier in division",
+			source: "total / count",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.IdentifierExpression{
+								Symbol: "total",
+							},
+							Operator: '/',
+							Right: ast.IdentifierExpression{
+								Symbol: "count",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "complex expression with identifiers",
+			source: "a + b * c",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.IdentifierExpression{
+								Symbol: "a",
+							},
+							Operator: '+',
+							Right: ast.BinaryExpression{
+								Left: ast.IdentifierExpression{
+									Symbol: "b",
+								},
+								Operator: '*',
+								Right: ast.IdentifierExpression{
+									Symbol: "c",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifiers with parentheses",
+			source: "(x + y) * z",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.BinaryExpression{
+								Left: ast.IdentifierExpression{
+									Symbol: "x",
+								},
+								Operator: '+',
+								Right: ast.IdentifierExpression{
+									Symbol: "y",
+								},
+							},
+							Operator: '*',
+							Right: ast.IdentifierExpression{
+								Symbol: "z",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "mixed identifiers and numbers",
+			source: "2 * x + 3 * y",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.BinaryExpression{
+								Left: ast.NumericLiteralExpression{
+									Value: 2,
+								},
+								Operator: '*',
+								Right: ast.IdentifierExpression{
+									Symbol: "x",
+								},
+							},
+							Operator: '+',
+							Right: ast.BinaryExpression{
+								Left: ast.NumericLiteralExpression{
+									Value: 3,
+								},
+								Operator: '*',
+								Right: ast.IdentifierExpression{
+									Symbol: "y",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "identifier in nested parentheses",
+			source: "((a + b) * (c - d))",
+			expectedProgram: ast.Program{
+				Statements: []ast.Statement{
+					ast.ExpressionStatement{
+						Expression: ast.BinaryExpression{
+							Left: ast.BinaryExpression{
+								Left: ast.IdentifierExpression{
+									Symbol: "a",
+								},
+								Operator: '+',
+								Right: ast.IdentifierExpression{
+									Symbol: "b",
+								},
+							},
+							Operator: '*',
+							Right: ast.BinaryExpression{
+								Left: ast.IdentifierExpression{
+									Symbol: "c",
+								},
+								Operator: '-',
+								Right: ast.IdentifierExpression{
+									Symbol: "d",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testcases {
@@ -639,6 +885,56 @@ func Test_GivenSourceWithUnexpectedTokens_WhenParse_ThenShouldReturnCorrectError
 			name:          "trailing unknown character",
 			source:        "1 + 2 @",
 			expectedError: fmt.Errorf("Unexpected token '@' at position 6."),
+		},
+		{
+			name:          "identifier followed by number",
+			source:        "x 5",
+			expectedError: fmt.Errorf("Unexpected token '5' at position 2."),
+		},
+		{
+			name:          "identifier followed by identifier",
+			source:        "x y",
+			expectedError: fmt.Errorf("Unexpected token 'y' at position 2."),
+		},
+		{
+			name:          "number followed by identifier without operator",
+			source:        "5 x",
+			expectedError: fmt.Errorf("Unexpected token 'x' at position 2."),
+		},
+		{
+			name:          "identifier before opening paren",
+			source:        "x (+ 2)",
+			expectedError: fmt.Errorf("Unexpected token '(' at position 2."),
+		},
+		{
+			name:          "identifier followed by identifier in parens",
+			source:        "x (y)",
+			expectedError: fmt.Errorf("Unexpected token '(' at position 2."),
+		},
+		{
+			name:          "closing paren followed by identifier",
+			source:        "(1 + 2) x",
+			expectedError: fmt.Errorf("Unexpected token 'x' at position 8."),
+		},
+		{
+			name:          "identifier after closing paren",
+			source:        "(x) y",
+			expectedError: fmt.Errorf("Unexpected token 'y' at position 4."),
+		},
+		{
+			name:          "multiple identifiers without operators",
+			source:        "a b c",
+			expectedError: fmt.Errorf("Unexpected token 'b' at position 2."),
+		},
+		{
+			name:          "identifier followed by number in sequence",
+			source:        "x 1 2",
+			expectedError: fmt.Errorf("Unexpected token '1' at position 2."),
+		},
+		{
+			name:          "mixed number identifier without operator",
+			source:        "1 x 2",
+			expectedError: fmt.Errorf("Unexpected token 'x' at position 2."),
 		},
 	}
 
