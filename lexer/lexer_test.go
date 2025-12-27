@@ -394,6 +394,194 @@ func Test_GivenSource_WhenGenerateTokens_ThenShouldReturnCorrectTokenSequence(t 
 				{Kind: EOF, Lexeme: "", Position: 8},
 			},
 		},
+		{
+			name:   "empty string inside backticks",
+			source: `""`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `""`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 2},
+			},
+		},
+		{
+			name:   "simple string",
+			source: `"hello"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"hello"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 7},
+			},
+		},
+		{
+			name:   "string with spaces",
+			source: `"hello world"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"hello world"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 13},
+			},
+		},
+		{
+			name:   "string with numbers",
+			source: `"test123"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"test123"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 9},
+			},
+		},
+		{
+			name:   "string with special characters",
+			source: `"hello@world!"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"hello@world!"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 14},
+			},
+		},
+		{
+			name:   "string in expression",
+			source: `let name = "John";`,
+			expectedTokens: []Token{
+				{Kind: Let, Lexeme: "let", Position: 0},
+				{Kind: Identifier, Lexeme: "name", Position: 4},
+				{Kind: Equals, Lexeme: "=", Position: 9},
+				{Kind: StringLiteral, Lexeme: `"John"`, Position: 11},
+				{Kind: Semicolon, Lexeme: ";", Position: 17},
+				{Kind: EOF, Lexeme: "", Position: 18},
+			},
+		},
+		{
+			name:   "multiple strings",
+			source: `"hello" "world"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"hello"`, Position: 0},
+				{Kind: StringLiteral, Lexeme: `"world"`, Position: 8},
+				{Kind: EOF, Lexeme: "", Position: 15},
+			},
+		},
+		{
+			name:   "string with escaped quote",
+			source: `"say \"hello\""`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"say \"hello\""`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 15},
+			},
+		},
+		{
+			name:   "string with escaped backslash",
+			source: `"path\\file"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"path\\file"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 12},
+			},
+		},
+		{
+			name:   "string with newline escape",
+			source: `"line1\nline2"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"line1\nline2"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 14},
+			},
+		},
+		{
+			name:   "string with tab escape",
+			source: `"col1\tcol2"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"col1\tcol2"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 12},
+			},
+		},
+		{
+			name:   "unterminated string",
+			source: `"hello`,
+			expectedTokens: []Token{
+				{Kind: Unknown, Lexeme: `"hello`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 6},
+			},
+		},
+		{
+			name:   "string with single quote inside",
+			source: `"it's working"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"it's working"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 14},
+			},
+		},
+		{
+			name:   "concatenation context",
+			source: `"Hello" + "World"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"Hello"`, Position: 0},
+				{Kind: Plus, Lexeme: "+", Position: 8},
+				{Kind: StringLiteral, Lexeme: `"World"`, Position: 10},
+				{Kind: EOF, Lexeme: "", Position: 17},
+			},
+		},
+		{
+			name:   "empty string in assignment",
+			source: `let empty = "";`,
+			expectedTokens: []Token{
+				{Kind: Let, Lexeme: "let", Position: 0},
+				{Kind: Identifier, Lexeme: "empty", Position: 4},
+				{Kind: Equals, Lexeme: "=", Position: 10},
+				{Kind: StringLiteral, Lexeme: `""`, Position: 12},
+				{Kind: Semicolon, Lexeme: ";", Position: 14},
+				{Kind: EOF, Lexeme: "", Position: 15},
+			},
+		},
+		{
+			name:   "string with escaped backslash at end",
+			source: `"test\\"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"test\\"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 8},
+			},
+		},
+		{
+			name:   "string with double escaped backslash",
+			source: `"test\\\\"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"test\\\\"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 10},
+			},
+		},
+		{
+			name:   "string ending with escaped quote",
+			source: `"test\""`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"test\""`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 8},
+			},
+		},
+		{
+			name:   "string with escaped quote then closing quote",
+			source: `"say \"hi\""`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"say \"hi\""`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 12},
+			},
+		},
+		{
+			name:   "string with backslash before escaped quote",
+			source: `"test\\\""`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"test\\\""`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 10},
+			},
+		},
+		{
+			name:   "string with multiple escapes",
+			source: `"a\\b\"c\\d"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `"a\\b\"c\\d"`, Position: 0},
+				{Kind: EOF, Lexeme: "", Position: 12},
+			},
+		},
+		{
+			name:   "empty string followed by escaped backslash string",
+			source: `"" "test\\"`,
+			expectedTokens: []Token{
+				{Kind: StringLiteral, Lexeme: `""`, Position: 0},
+				{Kind: StringLiteral, Lexeme: `"test\\"`, Position: 3},
+				{Kind: EOF, Lexeme: "", Position: 11},
+			},
+		},
 	}
 
 	for _, testcase := range testcases {
