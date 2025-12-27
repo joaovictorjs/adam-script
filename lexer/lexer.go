@@ -21,6 +21,7 @@ const (
 	Identifier
 	Equals
 	Semicolon
+	StringLiteral
 )
 
 var keywords = map[string]TokenKind{"let": Let, "const": Const}
@@ -71,6 +72,11 @@ func (l *Lexer) nextToken() Token {
 		return tk
 	}
 
+	if current == '"' {
+		tk := l.lexString()
+		return tk
+	}
+
 	if unicode.IsLetter(current) {
 		tk := l.lexMultichar()
 		return tk
@@ -104,6 +110,38 @@ func (l *Lexer) nextToken() Token {
 		Position: l.index,
 	}
 	l.index++
+	return token
+}
+
+func (l *Lexer) lexString() Token {
+	start := l.index
+	l.index++
+	for l.index < l.max {
+		char := l.source[l.index]
+		if char == '\\' && l.index+1 < l.max {
+			l.index += 2
+			continue
+		}
+
+		if char == '"' {
+			l.index++
+			lexeme := l.source[start:l.index]
+			token := Token{
+				Kind:     StringLiteral,
+				Lexeme:   lexeme,
+				Position: start,
+			}
+			return token
+		}
+		l.index++
+	}
+
+	lexeme := l.source[start:l.index]
+	token := Token{
+		Kind:     Unknown,
+		Lexeme:   lexeme,
+		Position: start,
+	}
 	return token
 }
 
