@@ -16,7 +16,14 @@ const (
 	LParen
 	RParen
 	Unknown
+	Let
+	Const
+	Identifier
+	Equals
+	Semicolon
 )
+
+var keywords = map[string]TokenKind{"let": Let, "const": Const}
 
 type Token struct {
 	Kind     TokenKind
@@ -64,6 +71,11 @@ func (l *Lexer) nextToken() Token {
 		return tk
 	}
 
+	if unicode.IsLetter(current) {
+		tk := l.lexMultichar()
+		return tk
+	}
+
 	var kind TokenKind
 	switch current {
 	case '+':
@@ -78,6 +90,10 @@ func (l *Lexer) nextToken() Token {
 		kind = LParen
 	case ')':
 		kind = RParen
+	case '=':
+		kind = Equals
+	case ';':
+		kind = Semicolon
 	default:
 		kind = Unknown
 	}
@@ -88,6 +104,32 @@ func (l *Lexer) nextToken() Token {
 		Position: l.index,
 	}
 	l.index++
+	return token
+}
+
+func (l *Lexer) lexMultichar() Token {
+	start := l.index
+	for l.index < l.max {
+		char := rune(l.source[l.index])
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')) && !unicode.IsDigit(char) && char != '_' {
+			break
+		}
+		l.index++
+	}
+
+	lexeme := l.source[start:l.index]
+	var tokenKind TokenKind
+	if kind, ok := keywords[lexeme]; ok {
+		tokenKind = kind
+	} else {
+		tokenKind = Identifier
+	}
+
+	token := Token{
+		Kind:     tokenKind,
+		Lexeme:   lexeme,
+		Position: start,
+	}
 	return token
 }
 
